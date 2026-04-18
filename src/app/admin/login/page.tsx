@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Mail, Lock, User, CheckCircle, ArrowRight } from "lucide-react"
 
 type AuthState = "login" | "signup" | "verify" | "reset" | "success"
 
@@ -16,6 +16,8 @@ export default function AdminLogin() {
   const [verificationCode, setVerificationCode] = useState(["", "", "", "", ""])
   const [rememberPassword, setRememberPassword] = useState(false)
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
 
   const handleLogin = (e: React.FormEvent) => {
@@ -120,82 +122,107 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-400 via-teal-500 to-teal-600 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decorative shapes */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorative gradient shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-teal-300/30 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-700/30 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/4 w-60 h-60 bg-teal-200/20 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-40 h-40 bg-teal-800/20 rounded-full blur-xl"></div>
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-teal-400/10 rounded-full blur-2xl"></div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative z-10">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10 border border-slate-700/50">
         {/* Login Form */}
         {authState === "login" && (
           <form onSubmit={handleLogin} className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Login as an admin</h1>
-              <p className="text-gray-600 text-sm">Please enter your email and password to continue</p>
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+                  <Lock className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+              <p className="text-slate-400 text-sm">Enter your credentials to access the admin panel</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email address:</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 text-black border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="esteban_schiller@gmail.com"
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="admin@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-500 text-black border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="••••••"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
+            <div className="flex items-center justify-between pt-2">
+              <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberPassword}
                   onChange={(e) => setRememberPassword(e.target.checked)}
-                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  className="w-4 h-4 rounded border-slate-600 text-teal-500 focus:ring-teal-500 bg-slate-700"
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember Password</span>
+                <span className="ml-2 text-sm text-slate-400">Remember me</span>
               </label>
               <button
                 type="button"
                 onClick={() => setAuthState("reset")}
-                className="text-sm text-teal-600 hover:text-teal-700"
+                className="text-sm text-teal-400 hover:text-teal-300 transition-colors font-medium"
               >
-                Forgot Password?
+                Forgot password?
               </button>
             </div>
 
-            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-400 text-sm font-medium">{error}</span>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
             >
-              Login
+              Sign In
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <div className="text-center">
-              <span className="text-gray-600 text-sm">Don't have an account? </span>
+            <div className="text-center pt-2">
+              <span className="text-slate-400 text-sm">Don't have an account? </span>
               <button
                 type="button"
                 onClick={() => setAuthState("signup")}
-                className="text-teal-600 hover:text-teal-700 font-medium"
+                className="text-teal-400 hover:text-teal-300 font-semibold transition-colors"
               >
-                Create Account
+                Create one
               </button>
             </div>
           </form>
@@ -204,75 +231,90 @@ export default function AdminLogin() {
         {/* Sign Up Form */}
         {authState === "signup" && (
           <form onSubmit={handleSignup} className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Create an admin account</h1>
-              <p className="text-gray-600 text-sm">Create an account to continue</p>
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+              <p className="text-slate-400 text-sm">Set up your admin account to get started</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email address:</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 text-black border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="esteban_schiller@gmail.com"
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="admin@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Username</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="your_username"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 text-black border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="Enter username"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 text-black border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="••••••"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                <span className="ml-2 text-sm text-gray-600">Remember Password</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setAuthState("reset")}
-                className="text-sm text-teal-600 hover:text-teal-700"
-              >
-                Forgot Password?
-              </button>
-            </div>
-
-            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-400 text-sm font-medium">{error}</span>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
             >
-              Sign Up
+              Create Account
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <div className="text-center">
-              <span className="text-gray-600 text-sm">Already have an account? </span>
+            <div className="text-center pt-2">
+              <span className="text-slate-400 text-sm">Already have an account? </span>
               <button
                 type="button"
                 onClick={() => setAuthState("login")}
-                className="text-teal-600 hover:text-teal-700 font-medium"
+                className="text-teal-400 hover:text-teal-300 font-semibold transition-colors"
               >
-                Login
+                Sign in
               </button>
             </div>
           </form>
@@ -281,16 +323,19 @@ export default function AdminLogin() {
         {/* Email Verification */}
         {authState === "verify" && (
           <form onSubmit={handleVerification} className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Check your email</h1>
-              <p className="text-gray-600 text-sm">
-                We sent a reset link to contact@discode...com enter 5 digit code that mentioned in the email
-              </p>
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+                  <Mail className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Verify Your Email</h1>
+              <p className="text-slate-400 text-sm">We sent a verification code to your email address. Enter the 5-digit code below.</p>
             </div>
 
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-2">
               {verificationCode.map((digit, index) => (
-                <div key={index} className="flex flex-col items-center">
+                <div key={index}>
                   <label htmlFor={`code-${authState}-${index}`} className="sr-only">
                     Verification code digit {index + 1}
                   </label>
@@ -301,7 +346,7 @@ export default function AdminLogin() {
                     value={digit}
                     onChange={(e) => handleCodeInput(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    className="w-14 h-14 text-center text-2xl font-bold border-2 border-slate-600/50 rounded-xl bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
                     placeholder="0"
                     title={`Verification code digit ${index + 1}`}
                   />
@@ -309,19 +354,24 @@ export default function AdminLogin() {
               ))}
             </div>
 
-            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-400 text-sm font-medium">{error}</span>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-300"
             >
               Verify Code
             </button>
 
-            <div className="text-center">
-              <span className="text-gray-600 text-sm">Haven't got the email yet? </span>
-              <button type="button" className="text-teal-600 hover:text-teal-700 font-medium">
-                Resend email
+            <div className="text-center pt-2">
+              <span className="text-slate-400 text-sm">Didn't receive the code? </span>
+              <button type="button" className="text-teal-400 hover:text-teal-300 font-semibold transition-colors">
+                Resend
               </button>
             </div>
           </form>
@@ -330,48 +380,81 @@ export default function AdminLogin() {
         {/* Password Reset */}
         {authState === "reset" && (
           <form onSubmit={handlePasswordReset} className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Set a new password</h1>
-              <p className="text-gray-600 text-sm">
-                Create a new password. Ensure it differs from previous ones for security
-              </p>
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+                  <Lock className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
+              <p className="text-slate-400 text-sm">Create a strong new password for your account</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="••••••"
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">New Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 bg-slate-700/50 text-white border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-500"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="••••••"
-              />
-            </div>
-
-            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-400 text-sm font-medium">{error}</span>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-300"
             >
               Update Password
             </button>
 
-            <div className="text-center">
-              <span className="text-gray-600 text-sm">Haven't got the email yet? </span>
-              <button type="button" className="text-teal-600 hover:text-teal-700 font-medium">
-                Resend email
+            <div className="text-center pt-2">
+              <button 
+                type="button"
+                onClick={() => setAuthState("login")}
+                className="text-teal-400 hover:text-teal-300 font-semibold transition-colors"
+              >
+                Back to login
               </button>
             </div>
           </form>
@@ -379,12 +462,15 @@ export default function AdminLogin() {
 
         {/* Success State */}
         {authState === "success" && (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Successful</h1>
-              <p className="text-gray-600 text-sm">
-                Congratulations! Your account has been created successfully. Redirecting to dashboard...
-              </p>
+              <div className="flex justify-center mb-6">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Welcome!</h1>
+              <p className="text-slate-400 text-sm">Your account has been created successfully. Redirecting to dashboard...</p>
             </div>
 
             <button
@@ -393,9 +479,10 @@ export default function AdminLogin() {
                 localStorage.setItem("adminEmail", email)
                 router.push("/admin")
               }}
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
             >
               Continue to Dashboard
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         )}

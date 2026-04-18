@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import AdminDashboard from "@/components/landing/AdminDashboard"
+import AdminDashboard from "@/components/landing/admin-dashboard/AdminDashboard"
+
 
 const AdminPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

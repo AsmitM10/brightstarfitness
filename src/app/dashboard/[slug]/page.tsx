@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 import MemberDashboard from "./MemberDashboard"
 
 export interface UserData {
-  id: number
+  id: string
   username: string
   userpage_slug: string
   attendance: string[] | null
@@ -11,9 +11,8 @@ export interface UserData {
   last_date: string
 }
 
-export default async function Page({ params }: { params: { slug: string } }) {
-  // pull slug directly from params (Next.js passes a plain object)
-  const { slug } = params
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
 
   console.log("PAGE HIT — SLUG:", slug)
 

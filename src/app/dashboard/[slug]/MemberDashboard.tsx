@@ -31,7 +31,7 @@ const supabase = createClient(
    Types
 ========================= */
 type UserData = {
-  id: number
+  id: string
   username: string
   userpage_slug: string
   attendance: string[] | null
@@ -39,19 +39,25 @@ type UserData = {
   registration_date: string
   last_date: string
 }
+type ReferralUser = {
+  username: string
+  last_date: string
+  userpage_slug: string
+}
 
 /* =========================
    Component
 ========================= */
 export default function MemberDashboard({ data }: { data: UserData }) {
   const [activeTab, setActiveTab] = useState<"invite" | "attendance">("invite")
-  const [activeSection, setActiveSection] = useState<"home" | "referrals" | "faqs">("home")
+  const [activeSection, setActiveSection] = useState<"home" | "referrals" | "faqs" | "sessions">("home")
   const [copied, setCopied] = useState(false)
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // referral list pulled from user5 table
-  const [referrals, setReferrals] = useState<string[]>([])
+const [referrals, setReferrals] = useState<ReferralUser[]>([])
+const [sessions, setSessions] = useState<any[]>([])
 
   const userName = data.username
   // this is the url other people should visit to sign up via your referral
@@ -60,20 +66,35 @@ export default function MemberDashboard({ data }: { data: UserData }) {
   const dashboardLink = `https://new-repo-alpha-snowy.vercel.app/dashboard/${data.userpage_slug}`
 
   // query referrals when component mounts
-  useEffect(() => {
-    const loadReferrals = async () => {
-      const { data: row, error } = await supabase
-        .from("user5")
-        .select("referrals")
-        .eq("user_id", data.id)
-        .single()
-      if (!error && row) {
-        setReferrals(row.referrals || [])
-        
-      }
+ useEffect(() => {
+  const loadReferrals = async () => {
+    const { data: rows, error } = await supabase
+      .from("user4")
+      .select("username,last_date,userpage_slug")
+      .eq("referrer", data.userpage_slug)
+
+    if (!error && rows) {
+      setReferrals(rows)
     }
-    loadReferrals()
-  }, [data.id])
+  }
+
+  const loadSessions = async () => {
+    const { data: rows, error } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("status", "scheduled")
+      .gte("session_date", new Date().toISOString().split('T')[0])
+      .order("session_date", { ascending: true })
+      .order("session_time", { ascending: true })
+
+    if (!error && rows) {
+      setSessions(rows)
+    }
+  }
+
+  loadReferrals()
+  loadSessions()
+}, [data.userpage_slug])
 
   /* =========================
      Attendance Helpers
@@ -200,6 +221,13 @@ export default function MemberDashboard({ data }: { data: UserData }) {
             <Users className="w-4 h-4 mr-3" /> Referrals
           </Button>
           <Button
+            variant={activeSection === "sessions" ? "default" : "ghost"}
+            className={`w-full justify-start ${activeSection === "sessions" ? "bg-teal-600 hover:bg-teal-700 text-white" : "text-gray-600"}`}
+            onClick={() => setActiveSection("sessions")}
+          >
+            <Play className="w-4 h-4 mr-3" /> Sessions
+          </Button>
+          <Button
             variant={activeSection === "faqs" ? "default" : "ghost"}
             className={`w-full justify-start ${activeSection === "faqs" ? "bg-teal-600 hover:bg-teal-700 text-white" : "text-gray-600"}`}
             onClick={() => setActiveSection("faqs")}
@@ -291,75 +319,143 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                 <p className="text-gray-700 mt-2">Invite friends and grow your network</p>
               </CardHeader>
               
-              <CardContent className="pt-6">
-                <div className="space-y-6">
-                  {/* Referral Link Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Your Referral Link</h3>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-lg p-4 font-mono text-sm text-gray-700 break-all">
-                        {referralLink}
-                      </div>
-                      <Button 
-                        onClick={handleCopy}
-                        className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      </Button>
+              <CardContent>
+
+                {/* Referral Link */}
+
+                <div className="mb-6">
+
+                  <h3 className="text-lg font-semibold mb-3">
+                    Your Referral Link
+                  </h3>
+
+                  <div className="flex gap-3">
+
+                    <div className="flex-1 border rounded p-3 font-mono text-sm break-all">
+                      {referralLink}
                     </div>
-                    {copied && (
-                      <p className="text-green-600 text-sm mt-2">✓ Copied to clipboard!</p>
-                    )}
+
+                    <Button onClick={handleCopy}>
+                      {copied ? <Check /> : <Copy />}
+                    </Button>
+
                   </div>
 
-                  {/* Share Options */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Share Via</h3>
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={handleWhatsAppShare}
-                        className="bg-green-600 hover:bg-green-700 text-white flex-1 rounded-lg"
-                      >
-                        WhatsApp
-                      </Button>
-                      <Button 
-                        className="bg-cyan-600 hover:bg-cyan-800 text-white flex-1 rounded-lg"
-                        onClick={() => {
-                          const message = `Join Bright Star Fitness and get FREE 7 Days Sessions!\n${referralLink}`
-                          //window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`, "_blank")
-                          window.open(`https://telegram.org/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`, "_blank")
-                  
-                        }}
-                      >
-                        Telegram
-                      </Button>
-                    </div>
-                  </div>
+                </div>
 
-                  {/* Referrals List */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Your Referrals</h3>
-                    {referrals.length === 0 ? (
-                      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
-                        <p className="text-gray-600 font-medium">No referrals yet</p>
-                        <p className="text-gray-500 text-sm mt-1">Share your link above to start earning referrals!</p>
-                      </div>
-                    ) : (
-                      <ul className="space-y-2">
-                        {referrals.map((slug) => (
-                          <li key={slug} className="flex items-center justify-between p-3 bg-white border rounded">
-                            <span className="break-all">{slug.replace(/_/g, " ")}</span>
-                            <Button
-                              size="sm"
-                              onClick={() => window.open(`/dashboard/${slug}`, "_blank")}
+                {/* REFERRAL TABLE */}
+
+                <div>
+
+                  <h3 className="text-lg font-semibold mb-3">
+                    Your Referrals
+                  </h3>
+
+                  {referrals.length === 0 ? (
+
+                    <div className="bg-gray-50 rounded-lg p-6 border text-center">
+                      No referrals yet
+                    </div>
+
+                  ) : (
+
+                    <div className="border rounded-lg overflow-hidden">
+
+                      <table className="w-full text-left">
+
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="p-3">Name</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+
+                          {referrals.map((user, i) => {
+
+                            const today = new Date()
+                            const lastDate = new Date(user.last_date)
+
+                            const status =
+                              today > lastDate
+                                ? "Completed"
+                                : "Pending"
+
+                            return (
+
+                              <tr key={i} className="border-t">
+
+                                <td className="p-3">
+                                  {user.username}
+                                </td>
+
+                                <td className="p-3">
+
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-sm ${
+                                      status === "Completed"
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-yellow-100 text-yellow-700"
+                                    }`}
+                                  >
+                                    {status}
+                                  </span>
+
+                                </td>
+
+                              </tr>
+
+                            )
+
+                          })}
+
+                        </tbody>
+
+                      </table>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeSection === "sessions" && (
+          <div className="max-w-3xl">
+            <Card className="bg-white shadow-lg rounded-xl overflow-hidden mb-6">
+              <CardHeader className="bg-gradient-to-r bg-white text-black">
+                <CardTitle className="text-2xl font-bold">Upcoming Sessions</CardTitle>
+                <p className="text-gray-700 mt-2">View your scheduled yoga sessions</p>
+              </CardHeader>
+              
+              <CardContent>
+                <div className="space-y-4">
+                  {sessions.length > 0 ? (
+                    sessions.map((session, index) => (
+                      <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <div className="font-semibold">{session.session_time}</div>
+                          <div className="text-sm text-gray-500">{new Date(session.session_date).toLocaleDateString()}</div>
+                        </div>
+                        <div className="text-right">
+                          {session.meeting_link && (
+                            <Button 
+                              className="bg-teal-600 hover:bg-teal-700"
+                              onClick={() => window.open(session.meeting_link, '_blank')}
                             >
-                              View
+                              Join Session
                             </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No upcoming sessions scheduled.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
