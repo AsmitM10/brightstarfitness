@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  ClipboardList,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -50,20 +51,27 @@ type ReferralUser = {
 ========================= */
 export default function MemberDashboard({ data }: { data: UserData }) {
   const [activeTab, setActiveTab] = useState<"invite" | "attendance">("invite")
-  const [activeSection, setActiveSection] = useState<"home" | "referrals" | "faqs" | "sessions">("home")
+  const [activeSection, setActiveSection] = useState<"home" | "referrals" | "faqs" | "sessions" | "attendance">("home")
   const [copied, setCopied] = useState(false)
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
-  // referral list pulled from user5 table
-const [referrals, setReferrals] = useState<ReferralUser[]>([])
-const [sessions, setSessions] = useState<any[]>([])
+  const [referrals, setReferrals] = useState<ReferralUser[]>([])
+  const [sessions, setSessions] = useState<any[]>([])
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([])
+  const [attendanceLoading, setAttendanceLoading] = useState(false)
+  const [attendanceStats, setAttendanceStats] = useState({ total: 0, attended: 0, missed: 0, percentage: 0 })
 
   const userName = data.username
+  // Get the base URL from environment or window location
+  const baseUrl = typeof window !== 'undefined' 
+    ? `${window.location.protocol}//${window.location.host}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  
   // this is the url other people should visit to sign up via your referral
-  const referralLink = `https://new-repo-alpha-snowy.vercel.app/${data.userpage_slug}`
+  const referralLink = `${baseUrl}/${data.userpage_slug}`
   // your personal dashboard (7‑day session) url
-  const dashboardLink = `https://new-repo-alpha-snowy.vercel.app/dashboard/${data.userpage_slug}`
+  const dashboardLink = `${baseUrl}/dashboard/${data.userpage_slug}`
 
   // query referrals when component mounts
  useEffect(() => {
@@ -92,16 +100,55 @@ const [sessions, setSessions] = useState<any[]>([])
     }
   }
 
+  const loadAttendance = async () => {
+    setAttendanceLoading(true)
+    try {
+      const res = await fetch(`/api/attendance?user_id=${data.id}&limit=100`)
+      const result = await res.json()
+      if (res.ok) {
+        const records = result.records || []
+        setAttendanceRecords(records)
+        const attended = records.filter((r: any) => r.status === 'attended').length
+        const missed = records.filter((r: any) => r.status === 'missed').length
+        const total = attended + missed
+        setAttendanceStats({
+          total,
+          attended,
+          missed,
+          percentage: total > 0 ? Math.round((attended / total) * 100) : 0,
+        })
+      }
+    } catch (err) {
+      console.error('Error loading attendance:', err)
+    } finally {
+      setAttendanceLoading(false)
+    }
+  }
+
   loadReferrals()
   loadSessions()
-}, [data.userpage_slug])
+  loadAttendance()
+}, [data.userpage_slug, data.id])
 
   /* =========================
      Attendance Helpers
   ========================= */
   const getTodayIndex = () => {
-    const start = new Date(data.created_at).getTime()
-    return Math.floor((Date.now() - start) / (1000 * 60 * 60 * 24))
+    // Trial starts the day AFTER registration
+    const registrationDay = new Date(data.registration_date)
+    registrationDay.setHours(0, 0, 0, 0)
+    
+    const trialStart = new Date(registrationDay)
+    trialStart.setDate(trialStart.getDate() + 1) // Next day after registration
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Calculate days since trial start
+    const daysSinceStart = Math.floor((today.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
+    
+    // Return index (0-based), or -1 if before trial starts
+    return daysSinceStart < 0 ? -1 : daysSinceStart
   }
 
   useEffect(() => {
@@ -227,6 +274,13 @@ const [sessions, setSessions] = useState<any[]>([])
           >
             <Play className="w-4 h-4 mr-3" /> Sessions
           </Button>
+          {/* <Button
+            variant={activeSection === "attendance" ? "default" : "ghost"}
+            className={`w-full justify-start ${activeSection === "attendance" ? "bg-teal-600 hover:bg-teal-700 text-white" : "text-gray-600"}`}
+            onClick={() => setActiveSection("attendance")}
+          >
+            <ClipboardList className="w-4 h-4 mr-3" /> My Attendance
+          </Button> */}
           <Button
             variant={activeSection === "faqs" ? "default" : "ghost"}
             className={`w-full justify-start ${activeSection === "faqs" ? "bg-teal-600 hover:bg-teal-700 text-white" : "text-gray-600"}`}
@@ -461,6 +515,117 @@ const [sessions, setSessions] = useState<any[]>([])
             </Card>
           </div>
         )}
+        {activeSection === "attendance" && (
+          <div className="max-w-3xl space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">My Attendance</h2>
+              <p className="text-gray-500 mt-1">Track your session attendance history</p>
+            </div>
+
+            Stats Cards
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-500">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{attendanceStats.total}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-500">Attended</p>
+                  <p className="text-2xl font-bold text-green-600 mt-1">{attendanceStats.attended}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-500">Missed</p>
+                  <p className="text-2xl font-bold text-red-600 mt-1">{attendanceStats.missed}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-500">Attendance Rate</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-2xl font-bold text-teal-600">{attendanceStats.percentage}%</p>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        attendanceStats.percentage >= 70 ? 'bg-green-500' :
+                        attendanceStats.percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${attendanceStats.percentage}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Attendance Table */}
+            <Card className="shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                {attendanceLoading ? (
+                  <div className="p-12 text-center">
+                    <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="mt-3 text-sm text-gray-500">Loading attendance...</p>
+                  </div>
+                ) : attendanceRecords.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No attendance records yet</p>
+                    <p className="text-sm text-gray-400 mt-1">Your session attendance will appear here.</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Time</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Session Link</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {attendanceRecords.map((record: any) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {record.session?.session_date
+                              ? new Date(record.session.session_date + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{record.session?.session_time || '—'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              record.status === 'attended'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {record.status === 'attended' ? 'Attended' : 'Missed'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {record.session?.meeting_link ? (
+                              <a
+                                href={record.session.meeting_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-teal-600 hover:underline"
+                              >
+                                Join
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
         {activeSection === "faqs" && (
           <div className="space-y-4 max-w-3xl">
             {faqs.map((faq, i) => (
@@ -485,14 +650,31 @@ const [sessions, setSessions] = useState<any[]>([])
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl">
             <p className="mb-4 font-semibold">Are you sure you want to logout?</p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setShowLogoutModal(false)}>
                 No
               </Button>
-              <Button onClick={() => (window.location.href = "/")}>Yes</Button>
+              <Button onClick={async () => {
+                try {
+                  // Call logout API to invalidate server-side session
+                  await fetch('/api/user/logout', { method: 'POST' })
+                  
+                  // Clear localStorage
+                  localStorage.removeItem('currentUser')
+                  
+                  // Redirect to home
+                  window.location.href = "/"
+                } catch (err) {
+                  console.error('Logout error:', err)
+                  // Still redirect even if API call fails
+                  window.location.href = "/"
+                }
+              }}>
+                Yes
+              </Button>
             </div>
           </div>
         </div>

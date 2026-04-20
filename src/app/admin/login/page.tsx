@@ -20,7 +20,7 @@ export default function AdminLogin() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -29,16 +29,29 @@ export default function AdminLogin() {
       return
     }
 
-    // Simple admin validation - in real app, this would be server-side
-    if (email === "admin@brightstarfitness.com" && password === "admin123") {
-      localStorage.setItem("adminAuth", "true")
-      localStorage.setItem("adminEmail", email)
-      if (rememberPassword) {
-        localStorage.setItem("adminRememberMe", "true")
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Store email in localStorage for display purposes only
+        localStorage.setItem("adminEmail", email)
+        if (rememberPassword) {
+          localStorage.setItem("adminRememberMe", "true")
+        }
+        router.push("/admin")
+      } else {
+        setError(data.error || "Invalid email or password")
       }
-      router.push("/admin")
-    } else {
-      setError("Invalid email or password")
+    } catch (err) {
+      setError("An error occurred. Please try again.")
     }
   }
 

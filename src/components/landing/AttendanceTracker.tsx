@@ -30,11 +30,19 @@ export default function AttendanceTracker({
      Date Helpers
   --------------------------*/
   const getDatesArray = () => {
-    const start = new Date(registration_date)
-    const end = new Date(last_date)
-    const dates = []
+    // Trial starts the day AFTER registration
+    const registrationDay = new Date(registration_date)
+    registrationDay.setHours(0, 0, 0, 0)
     
-    const current = new Date(start)
+    const trialStart = new Date(registrationDay)
+    trialStart.setDate(trialStart.getDate() + 1) // Next day after registration
+    
+    const end = new Date(last_date)
+    end.setHours(0, 0, 0, 0)
+    
+    const dates = []
+    const current = new Date(trialStart)
+    
     while (current <= end) {
       dates.push(new Date(current))
       current.setDate(current.getDate() + 1)

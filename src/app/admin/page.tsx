@@ -11,20 +11,25 @@ const AdminPage = () => {
   const router = useRouter()
 
   useEffect(() => {
-    console.log("[v0] Checking admin authentication...")
-    const adminAuth = localStorage.getItem("adminAuth")
-    const adminEmail = localStorage.getItem("adminEmail")
+    const verifyAuth = async () => {
+      try {
+        const response = await fetch('/api/admin/verify')
+        const data = await response.json()
 
-    console.log("[v0] Auth status:", { adminAuth, adminEmail })
-
-    if (adminAuth === "true" && adminEmail) {
-      console.log("[v0] User authenticated, showing dashboard")
-      setIsAuthenticated(true)
-    } else {
-      console.log("[v0] User not authenticated, redirecting to login")
-      router.push("/admin/login")
+        if (data.authenticated) {
+          setIsAuthenticated(true)
+        } else {
+          router.push("/admin/login")
+        }
+      } catch (err) {
+        console.error("Auth verification error:", err)
+        router.push("/admin/login")
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setIsLoading(false)
+
+    verifyAuth()
   }, [router])
 
   if (isLoading) {

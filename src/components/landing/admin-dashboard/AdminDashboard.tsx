@@ -14,6 +14,8 @@ import { HolidayModal } from './HolidayModal'
 import { HolidayPreviewModal } from './HolidayPreviewModal'
 import { SessionSchedulingModal } from './modals'
 import { UsersIcon, UserIcon, ChartIcon, ClockIcon } from './icons'
+import { SessionsSection } from './SessionsSection'
+import { AttendanceSection } from './AttendanceSection'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { Search, Bell } from "lucide-react"
 interface Session {
@@ -398,7 +400,11 @@ function AdminDashboard() {
     additionalPayload?: any,
   ) => {
     try {
-      const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || 'https://your-n8n-url/webhook/session-update'
+      const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
+      if (!n8nUrl) {
+        console.warn('NEXT_PUBLIC_N8N_WEBHOOK_URL is not set. Skipping webhook.')
+        return
+      }
       const payload: Record<string, any> = {
         session_date: sessionDate,
         type,
@@ -409,7 +415,7 @@ function AdminDashboard() {
       }
 
       if (meetingLink) {
-        payload.meeting_link = meetingLink
+        payload.session_link = meetingLink
       }
 
       if (additionalPayload) {
@@ -418,9 +424,7 @@ function AdminDashboard() {
 
       const response = await fetch(n8nUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
@@ -446,9 +450,7 @@ function AdminDashboard() {
 
       const response = await fetch('/api/sessions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'scheduleAll',
           session_date: dateStr,
@@ -462,63 +464,15 @@ function AdminDashboard() {
         throw new Error(result.error || 'Failed to schedule sessions')
       }
 
-      await triggerN8nWebhook(dateStr, 'scheduled', undefined, meetingLink)
+      await triggerN8nWebhook(dateStr, 'scheduled', SESSION_TIMES.join(','), meetingLink)
       await fetchSessions()
-      addNotification(`All sessions on ${date.toLocaleDateString()} have been scheduled by admin.`)
+
+      addNotification(`Sessions on ${date.toLocaleDateString()} have been scheduled.`)
     } catch (error) {
-      console.error('Error scheduling all sessions:', error)
+      console.error('Error scheduling sessions:', error)
       alert('Failed to schedule sessions. Please try again.')
     } finally {
       setSessionLoading(false)
-    }
-  }
-
-  const toggleSessionStatus = async (
-    date: Date,
-    sessionTime: string,
-    status: 'scheduled' | 'cancelled',
-    meetingLink?: string,
-  ) => {
-    const sessionKey = `${toLocalDate(date)}-${sessionTime}`
-    setIndividualSessionLoading(prev => ({ ...prev, [sessionKey]: true }))
-
-    try {
-      const client = createSupabaseBrowserClient()
-      const dateStr = toLocalDate(date)
-
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'toggleSession',
-          session_date: dateStr,
-          session_time: sessionTime,
-          status,
-          meeting_link: meetingLink || null,
-        }),
-      })
-
-      const result = await response.json()
-      if (!response.ok) {
-        console.error('Supabase Error:', result.error)
-        throw new Error(result.error || 'Database error while updating session')
-      }
-
-      // Only run webhook if DB success
-      await triggerN8nWebhook(dateStr, status, sessionTime, meetingLink)
-
-      // Wait a moment for DB to fully write, then fetch fresh data
-      await new Promise(resolve => setTimeout(resolve, 300))
-      await fetchSessions()
-
-      addNotification(`Session at ${sessionTime} on ${date.toLocaleDateString()} has been ${status === 'scheduled' ? 'scheduled' : 'cancelled'} by admin.`)
-    } catch (err: any) {
-      console.error('Unexpected Error:', err?.message || err)
-      alert('Something went wrong. Try again.')
-    } finally {
-      setIndividualSessionLoading(prev => ({ ...prev, [sessionKey]: false }))
     }
   }
 
@@ -530,10 +484,7 @@ function AdminDashboard() {
       const response = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'cancelAll',
-          session_date: dateStr,
-        }),
+        body: JSON.stringify({ action: 'cancelAll', session_date: dateStr }),
       })
 
       const result = await response.json()
@@ -541,17 +492,52 @@ function AdminDashboard() {
         throw new Error(result.error || 'Failed to cancel sessions')
       }
 
-      await triggerN8nWebhook(dateStr, 'cancelled')
+      await triggerN8nWebhook(dateStr, 'cancelled', SESSION_TIMES.join(','))
       await fetchSessions()
-
-      // ✅ KEEP MODAL OPEN
-      addNotification(`All sessions on ${date.toLocaleDateString()} have been cancelled by admin.`)
-
+      addNotification(`All sessions on ${date.toLocaleDateString()} have been cancelled.`)
     } catch (error) {
       console.error('Error cancelling all sessions:', error)
       alert('Failed to cancel sessions. Please try again.')
     } finally {
       setSessionLoading(false)
+    }
+  }
+
+  const toggleSessionStatus = async (
+    date: Date,
+    sessionTime: string,
+    status: 'scheduled' | 'cancelled',
+    meetingLink?: string,
+  ) => {
+    const dateStr = toLocalDate(date)
+    const sessionKey = `${dateStr}-${sessionTime}`
+    setIndividualSessionLoading(prev => ({ ...prev, [sessionKey]: true }))
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggleSession',
+          session_date: dateStr,
+          session_time: sessionTime,
+          status,
+          meeting_link: meetingLink || null,
+        }),
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update session')
+      }
+
+      await triggerN8nWebhook(dateStr, status, sessionTime, meetingLink)
+      await fetchSessions()
+      addNotification(`Session at ${sessionTime} on ${date.toLocaleDateString()} has been ${status}.`)
+    } catch (error) {
+      console.error('Error toggling session:', error)
+      throw error
+    } finally {
+      setIndividualSessionLoading(prev => ({ ...prev, [sessionKey]: false }))
     }
   }
 
@@ -783,10 +769,26 @@ function AdminDashboard() {
     setHolidays((prev: any) => prev.filter((holiday: any) => holiday.date.toDateString() !== dateToRemove.toDateString()))
   }
 
-  const handleLogout = () => {
-    setShowLogoutModal(false)
-    // Add logout logic here (redirect to login, clear session, etc.)
-    window.location.href = "/admin/login"
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server-side session
+      await fetch('/api/admin/logout', {
+        method: 'POST',
+      })
+      
+      // Clear any localStorage data
+      localStorage.removeItem('adminEmail')
+      localStorage.removeItem('adminRememberMe')
+      
+      setShowLogoutModal(false)
+      
+      // Redirect to login page
+      window.location.href = "/admin/login"
+    } catch (err) {
+      console.error('Logout error:', err)
+      // Still redirect even if API call fails
+      window.location.href = "/admin/login"
+    }
   }
 
   const handleChangePassword = () => {
@@ -953,6 +955,10 @@ if (selectedSessionDate) {
               />
             </>
           )}
+
+          {activeSection === "sessions" && <SessionsSection />}
+
+          {activeSection === "attendance" && <AttendanceSection />}
 
           {/* Calendar view */}
           {activeSection === "calendar" && (

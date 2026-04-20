@@ -15,8 +15,7 @@ export default function FooterSection() {
         {/* Left Section */}
         <div className="space-y-6">
           <div className="flex flex-col items-start gap-3">
-              <img src="/logo.svg" alt="Bright Star Fitness Logo" className=" w-120px h-59px angle-0 opacity-1>
-" /> 
+              <img src="/logo.svg" alt="Bright Star Fitness Logo" className="h-10 w-auto" />
             <div>
               <h3 className="text-xl font-bold leading-relaxed">Transform Your Body</h3>
             </div>

@@ -1,4 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { verifyUserToken } from "@/lib/auth/verifyToken"
 import MemberDashboard from "./MemberDashboard"
 
 export interface UserData {
@@ -14,33 +17,40 @@ export interface UserData {
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  console.log("PAGE HIT — SLUG:", slug)
+  // Server-side authentication check (defense in depth)
+  const cookieStore = await cookies()
+  const userSession = cookieStore.get('user_session')
 
-  const supabase = await createSupabaseServerClient()
-  console.log("SUPABASE CLIENT READY")
+  if (!userSession) {
+    redirect('/?login=required')
+  }
 
-  // fetch exactly one user row matching the slug
+  // Verify JWT token
+  const userPayload = await verifyUserToken(userSession.value)
+  
+  if (!userPayload) {
+    redirect('/?login=expired')
+  }
+
+  // Verify user is accessing their own dashboard
+  if (userPayload.slug !== slug) {
+    redirect('/?error=unauthorized')
+  }
+
+  const supabase = createSupabaseServerClient()
+
+  // Fetch user data - now we know it's authenticated and authorized
   const { data, error } = await supabase
     .from("user4")
     .select("*")
     .eq("userpage_slug", slug)
+    .eq("id", userPayload.userId) // Additional security: verify ID matches
     .single()
 
-  console.log("SUPABASE DATA:", data)
-  console.log("SUPABASE ERROR:", error)
-
-  if (error) {
+  if (error || !data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">Error loading user</p>
-      </div>
-    )
-  }
-
-  if (!data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">User Not Found</p>
+        <p className="text-lg font-semibold">Error loading dashboard</p>
       </div>
     )
   }

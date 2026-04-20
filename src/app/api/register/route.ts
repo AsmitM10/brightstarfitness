@@ -106,12 +106,27 @@ export async function POST(req: Request) {
     "_" +
     Date.now()
 
+  // Calculate trial dates
+  // Registration date is today
+  const registrationDate = new Date()
+  registrationDate.setHours(0, 0, 0, 0) // Normalize to start of day
+  
+  // Trial starts NEXT DAY after registration (not same day)
+  const trialStartDate = new Date(registrationDate)
+  trialStartDate.setDate(trialStartDate.getDate() + 1)
+  
+  // Trial runs for exactly 7 days (start day + 6 more days)
+  const lastDate = new Date(trialStartDate)
+  lastDate.setDate(lastDate.getDate() + 6)
+
   // insert user record into user4 (store referrer slug if provided)
   const insertPayload: any = {
     username,
     whatsapp_no,
     userpage_slug: slug,
     verified: false,
+    registration_date: registrationDate.toISOString(),
+    last_date: lastDate.toISOString(),
   }
   if (referrer_slug) {
     insertPayload.referrer = referrer_slug

@@ -163,7 +163,12 @@ export const useSessions = () => {
 
   const triggerN8nWebhook = async (sessionDate: string, type: 'scheduled' | 'cancelled') => {
     try {
-      const response = await fetch('https://your-n8n-url/webhook/session-update', {
+      const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
+      if (!n8nUrl) {
+        console.warn('NEXT_PUBLIC_N8N_WEBHOOK_URL is not set. Skipping webhook.')
+        return
+      }
+      const response = await fetch(n8nUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,3 @@
-
-// //
 "use client";
 
 import { motion } from "framer-motion";
@@ -88,10 +86,7 @@ export default function JoinFormSection() {
     }
   };
 
-  // ✅ Handle Form Submit
-// ✅ Handle Form Submit
-// ✅ Handle Form Submit
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   setMessage("")
 
@@ -144,6 +139,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true }}
+      id="join-form"
       className="px-4 py-8 max-w-4xl mx-auto"
     >
       <div className="text-center mb-6">

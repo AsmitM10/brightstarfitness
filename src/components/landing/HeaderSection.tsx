@@ -34,7 +34,7 @@ export default function HeaderSection() {
         className="sticky top-0 z-40 py-2 px-4"
         style={{
           background:
-            "linear-gradient(180deg, #C3F7E #D7FAF4 23.25%, #E1FBF7 39.87%, #EBFCFA 71.08%, #F5FEFC 85.5%, #FFFFFF 100%)",
+            "linear-gradient(180deg, #C3F7EE 0%, #D7FAF4 23.25%, #E1FBF7 39.87%, #EBFCFA 71.08%, #F5FEFC 85.5%, #FFFFFF 100%)",
         }}
       >
         {/* Rounded navbar container now stretches full width */}

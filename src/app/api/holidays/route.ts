@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { requireAdminAuth } from '@/lib/auth'
 
 type HolidayPayload = {
   action: 'add' | 'get'
@@ -14,6 +15,10 @@ export async function POST(req: Request) {
     const supabase = createSupabaseServerClient()
 
     if (body.action === 'add') {
+      // Verify admin authentication for adding holidays
+      const authError = await requireAdminAuth()
+      if (authError) return authError
+
       if (!body.start_date || !body.end_date || !body.reason) {
         return NextResponse.json({ error: 'Missing holiday data' }, { status: 400 })
       }
