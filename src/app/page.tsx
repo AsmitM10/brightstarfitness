@@ -11,6 +11,7 @@ import TrainerSection from "@/components/landing/TrainerSection"
 import ImageCarousel from "@/components/landing/ImageCarousel"
 import Benefits from "@/components/landing/Benefits"
 import Features from "@/components/landing/Features"
+import PricingSection from "@/components/landing/PricingSection"
 
 export default function FitnessLanding() {
   const [candidateCount, setCandidateCount] = useState(0)
@@ -73,10 +74,13 @@ export default function FitnessLanding() {
           <ImageCarousel />
         </div>
         <div className="stagger-animation">
-          <Benefits />
+          <TestimonialsSection />
         </div>
         <div className="stagger-animation">
-          <TestimonialsSection />
+          <PricingSection />
+        </div>
+        <div className="stagger-animation">
+          <Benefits />
         </div>
         <div className="stagger-animation">
           <Features />

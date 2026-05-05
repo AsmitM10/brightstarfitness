@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { UserSessions } from '@/components/landing/user-dashboard/UserSessions'
 import AttendanceTracker from "@/components/landing/AttendanceTracker"
 import { createClient } from "@supabase/supabase-js"
 import { Sidebar } from "lucide-react"
@@ -64,71 +65,71 @@ export default function MemberDashboard({ data }: { data: UserData }) {
 
   const userName = data.username
   // Get the base URL from environment or window location
-  const baseUrl = typeof window !== 'undefined' 
+  const baseUrl = typeof window !== 'undefined'
     ? `${window.location.protocol}//${window.location.host}`
     : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-  
+
   // this is the url other people should visit to sign up via your referral
   const referralLink = `${baseUrl}/${data.userpage_slug}`
   // your personal dashboard (7‑day session) url
   const dashboardLink = `${baseUrl}/dashboard/${data.userpage_slug}`
 
   // query referrals when component mounts
- useEffect(() => {
-  const loadReferrals = async () => {
-    const { data: rows, error } = await supabase
-      .from("user4")
-      .select("username,last_date,userpage_slug")
-      .eq("referrer", data.userpage_slug)
+  useEffect(() => {
+    const loadReferrals = async () => {
+      const { data: rows, error } = await supabase
+        .from("user4")
+        .select("username,last_date,userpage_slug")
+        .eq("referrer", data.userpage_slug)
 
-    if (!error && rows) {
-      setReferrals(rows)
-    }
-  }
-
-  const loadSessions = async () => {
-    const { data: rows, error } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("status", "scheduled")
-      .gte("session_date", new Date().toISOString().split('T')[0])
-      .order("session_date", { ascending: true })
-      .order("session_time", { ascending: true })
-
-    if (!error && rows) {
-      setSessions(rows)
-    }
-  }
-
-  const loadAttendance = async () => {
-    setAttendanceLoading(true)
-    try {
-      const res = await fetch(`/api/attendance?user_id=${data.id}&limit=100`)
-      const result = await res.json()
-      if (res.ok) {
-        const records = result.records || []
-        setAttendanceRecords(records)
-        const attended = records.filter((r: any) => r.status === 'attended').length
-        const missed = records.filter((r: any) => r.status === 'missed').length
-        const total = attended + missed
-        setAttendanceStats({
-          total,
-          attended,
-          missed,
-          percentage: total > 0 ? Math.round((attended / total) * 100) : 0,
-        })
+      if (!error && rows) {
+        setReferrals(rows)
       }
-    } catch (err) {
-      console.error('Error loading attendance:', err)
-    } finally {
-      setAttendanceLoading(false)
     }
-  }
 
-  loadReferrals()
-  loadSessions()
-  loadAttendance()
-}, [data.userpage_slug, data.id])
+    const loadSessions = async () => {
+      const { data: rows, error } = await supabase
+        .from("sessions")
+        .select("*")
+        .eq("status", "scheduled")
+        .gte("session_date", new Date().toISOString().split('T')[0])
+        .order("session_date", { ascending: true })
+        .order("session_time", { ascending: true })
+
+      if (!error && rows) {
+        setSessions(rows)
+      }
+    }
+
+    const loadAttendance = async () => {
+      setAttendanceLoading(true)
+      try {
+        const res = await fetch(`/api/attendance?user_id=${data.id}&limit=100`)
+        const result = await res.json()
+        if (res.ok) {
+          const records = result.records || []
+          setAttendanceRecords(records)
+          const attended = records.filter((r: any) => r.status === 'attended').length
+          const missed = records.filter((r: any) => r.status === 'missed').length
+          const total = attended + missed
+          setAttendanceStats({
+            total,
+            attended,
+            missed,
+            percentage: total > 0 ? Math.round((attended / total) * 100) : 0,
+          })
+        }
+      } catch (err) {
+        console.error('Error loading attendance:', err)
+      } finally {
+        setAttendanceLoading(false)
+      }
+    }
+
+    loadReferrals()
+    loadSessions()
+    loadAttendance()
+  }, [data.userpage_slug, data.id])
 
   /* =========================
      Attendance Helpers
@@ -137,16 +138,16 @@ export default function MemberDashboard({ data }: { data: UserData }) {
     // Trial starts the day AFTER registration
     const registrationDay = new Date(data.registration_date)
     registrationDay.setHours(0, 0, 0, 0)
-    
+
     const trialStart = new Date(registrationDay)
     trialStart.setDate(trialStart.getDate() + 1) // Next day after registration
-    
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     // Calculate days since trial start
     const daysSinceStart = Math.floor((today.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
-    
+
     // Return index (0-based), or -1 if before trial starts
     return daysSinceStart < 0 ? -1 : daysSinceStart
   }
@@ -207,7 +208,7 @@ export default function MemberDashboard({ data }: { data: UserData }) {
      FAQ
   ========================= */
   const faqs = [
-   {
+    {
       question: "What is the 7-day free online fitness session?",
       answer: "Our 7-day free online fitness session is a comprehensive program...",
     },
@@ -235,7 +236,7 @@ export default function MemberDashboard({ data }: { data: UserData }) {
       question: "Can I share the session link with my friends or family?",
       answer: "Yes! Use the referral system in your dashboard.",
     },
-    
+
   ]
 
   /* =========================
@@ -288,7 +289,7 @@ export default function MemberDashboard({ data }: { data: UserData }) {
           >
             <HelpCircle className="w-4 h-4 mr-3" /> FAQs
           </Button>
-        
+
           <Button
             variant="ghost"
             className="w-full justify-start text-gray-600 hover:bg-red-100 hover:text-red-700"
@@ -304,12 +305,27 @@ export default function MemberDashboard({ data }: { data: UserData }) {
         {/* Live Session Card */}
         <Card className="mb-8 overflow-hidden">
           <div className="relative h-48">
-            <img src="/images/utube.jpg" className="w-full h-full object-cover opacity-80" />
-            <div className="absolute inset-0 flex items-center p-6">
-              <Button className="bg-red-600" onClick={markTodayPresent}>
-                <Play className="w-4 h-4 mr-2" /> Join Live
-              </Button>
+
+            {/* Background Image */}
+            <img
+              src="/images/utube.jpg"
+              className="w-full h-full object-cover"
+              alt="Workout Banner"
+            />
+
+            {/* Dark Overlay */}
+            <div className="absolute inset-0 bg-black/50" />
+
+            {/* Centered Content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+              <h2 className="text-white text-2xl md:text-3xl font-bold">
+                Push Your Limits
+              </h2>
+              <p className="text-gray-200 text-sm md:text-base mt-2">
+                Stay consistent. Stay strong.
+              </p>
             </div>
+
           </div>
         </Card>
 
@@ -354,8 +370,8 @@ export default function MemberDashboard({ data }: { data: UserData }) {
 
             {activeTab === "attendance" && (
               <Card className="p-8 shadow-lg">
-                <AttendanceTracker 
-                  attendance={data.attendance || []} 
+                <AttendanceTracker
+                  attendance={data.attendance || []}
                   created_at={data.created_at}
                   userpage_slug={data.userpage_slug}
                   registration_date={data.registration_date}
@@ -372,7 +388,7 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                 <CardTitle className="text-2xl font-bold">Share and Invite</CardTitle>
                 <p className="text-gray-700 mt-2">Invite friends and grow your network</p>
               </CardHeader>
-              
+
               <CardContent>
 
                 {/* Referral Link */}
@@ -447,11 +463,10 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                                 <td className="p-3">
 
                                   <span
-                                    className={`px-3 py-1 rounded-full text-sm ${
-                                      status === "Completed"
+                                    className={`px-3 py-1 rounded-full text-sm ${status === "Completed"
                                         ? "bg-green-100 text-green-700"
                                         : "bg-yellow-100 text-yellow-700"
-                                    }`}
+                                      }`}
                                   >
                                     {status}
                                   </span>
@@ -479,41 +494,7 @@ export default function MemberDashboard({ data }: { data: UserData }) {
           </div>
         )}
         {activeSection === "sessions" && (
-          <div className="max-w-3xl">
-            <Card className="bg-white shadow-lg rounded-xl overflow-hidden mb-6">
-              <CardHeader className="bg-gradient-to-r bg-white text-black">
-                <CardTitle className="text-2xl font-bold">Upcoming Sessions</CardTitle>
-                <p className="text-gray-700 mt-2">View your scheduled yoga sessions</p>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-4">
-                  {sessions.length > 0 ? (
-                    sessions.map((session, index) => (
-                      <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                        <div>
-                          <div className="font-semibold">{session.session_time}</div>
-                          <div className="text-sm text-gray-500">{new Date(session.session_date).toLocaleDateString()}</div>
-                        </div>
-                        <div className="text-right">
-                          {session.meeting_link && (
-                            <Button 
-                              className="bg-teal-600 hover:bg-teal-700"
-                              onClick={() => window.open(session.meeting_link, '_blank')}
-                            >
-                              Join Session
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No upcoming sessions scheduled.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <UserSessions />
         )}
         {activeSection === "attendance" && (
           <div className="max-w-3xl space-y-6">
@@ -550,10 +531,9 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
-                        attendanceStats.percentage >= 70 ? 'bg-green-500' :
-                        attendanceStats.percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
+                      className={`h-full rounded-full ${attendanceStats.percentage >= 70 ? 'bg-green-500' :
+                          attendanceStats.percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
                       style={{ width: `${attendanceStats.percentage}%` }}
                     />
                   </div>
@@ -595,11 +575,10 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">{record.session?.session_time || '—'}</td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                              record.status === 'attended'
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${record.status === 'attended'
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
-                            }`}>
+                              }`}>
                               {record.status === 'attended' ? 'Attended' : 'Missed'}
                             </span>
                           </td>
@@ -643,9 +622,9 @@ export default function MemberDashboard({ data }: { data: UserData }) {
               </Card>
             ))}
           </div>
-          
+
         )}
-        
+
       </div>
 
       {/* Logout Modal */}
@@ -661,10 +640,10 @@ export default function MemberDashboard({ data }: { data: UserData }) {
                 try {
                   // Call logout API to invalidate server-side session
                   await fetch('/api/user/logout', { method: 'POST' })
-                  
+
                   // Clear localStorage
                   localStorage.removeItem('currentUser')
-                  
+
                   // Redirect to home
                   window.location.href = "/"
                 } catch (err) {
