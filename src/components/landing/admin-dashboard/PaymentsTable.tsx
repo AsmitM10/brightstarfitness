@@ -66,7 +66,7 @@ export default function PaymentsTable() {
       const response = await fetch('/api/admin/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', payment_id }),
+        body: JSON.stringify({ action: 'approve', payment_id: paymentId }),
       })
       if (response.ok) {
         fetchPayments()
@@ -81,7 +81,7 @@ export default function PaymentsTable() {
       const response = await fetch('/api/admin/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', payment_id }),
+        body: JSON.stringify({ action: 'reject', paymentId }),
       })
       if (response.ok) {
         fetchPayments()

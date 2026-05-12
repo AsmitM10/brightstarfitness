@@ -69,7 +69,7 @@ export default function InvoicesTable() {
       const response = await fetch('/api/admin/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resend', invoice_id }),
+        body: JSON.stringify({ action: 'resend', invoiceId }),
       })
       if (response.ok) {
         fetchInvoices()
@@ -162,7 +162,7 @@ export default function InvoicesTable() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(invoice.invoice_url, '_blank')}
+                            onClick={() => invoice.invoice_url && window.open(invoice.invoice_url, '_blank')}
                           >
                             <FileText className="h-3 w-3 mr-1" />
                             View
