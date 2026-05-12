@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: invoiceError.message }, { status: 500 })
       }
 
-      return NextResponse.json({ success: true, invoice_id: invoice.id, invoice_number })
+      return NextResponse.json({ success: true, invoice_id: invoice.id, invoiceNumber })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
